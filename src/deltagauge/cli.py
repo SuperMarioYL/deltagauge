@@ -16,6 +16,7 @@ from rich.table import Table
 
 from deltagauge.gaugerr import ErrorBudget, error_budget
 from deltagauge.gaugerr import compare as compare_models
+from deltagauge.importers import csv as csv_runs
 from deltagauge.importers import inspect as inspect_logs
 from deltagauge.importers import promptfoo
 from deltagauge.model import CANONICAL_COLUMNS, Design, RunSet, validation_message
@@ -50,9 +51,18 @@ def _fail(message: str) -> NoReturn:
     raise typer.Exit(code=1)
 
 
-def _demo_dataset() -> Path:
-    """The demo dataset ships in ``examples/`` of the repository checkout."""
-    return Path(__file__).resolve().parents[2] / "examples" / DEMO_DATASET
+def _demo_dataset() -> Path | None:
+    """The bundled demo dataset, or ``None`` when this install does not carry it.
+
+    Installed as a tool the dataset ships inside the package (the wheel's
+    ``force-include`` copies it out of ``examples/``), and running from a
+    checkout it is the ``examples/`` file itself.
+    """
+    candidates = (
+        Path(__file__).resolve().parent / "data" / DEMO_DATASET,
+        Path(__file__).resolve().parents[2] / "examples" / DEMO_DATASET,
+    )
+    return next((path for path in candidates if path.is_file()), None)
 
 
 def _load_run_set(run_data: Path | None) -> tuple[str, RunSet]:
@@ -63,7 +73,7 @@ def _load_run_set(run_data: Path | None) -> tuple[str, RunSet]:
     """
     if run_data is None:
         path = _demo_dataset()
-        if not path.is_file():
+        if path is None:
             _fail("the bundled demo dataset is missing; pass a run data path")
         label = path.name
     else:
@@ -71,7 +81,7 @@ def _load_run_set(run_data: Path | None) -> tuple[str, RunSet]:
         label = str(path)
 
     try:
-        return label, RunSet.from_csv(path)
+        return label, csv_runs.load(path)
     except ValidationError as error:
         _fail(validation_message(error))
     except (OSError, ValueError) as error:
@@ -182,7 +192,7 @@ def _import_run_set(path: Path, source: Source) -> RunSet:
             return promptfoo.load(path)
         if source is Source.inspect:
             return inspect_logs.load(path)
-        return RunSet.from_csv(path)
+        return csv_runs.load(path)
     except ValidationError as error:
         _fail(validation_message(error))
     except (OSError, ValueError) as error:
