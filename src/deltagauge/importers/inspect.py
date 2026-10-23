@@ -80,9 +80,7 @@ def _observations(log_path: Path) -> list[Observation]:
 
         scores = sample.get("scores")
         if not isinstance(scores, dict) or not scores:
-            raise ValueError(
-                f"{where} has no scores; expected the per-scorer scores Inspect logs"
-            )
+            raise ValueError(f"{where} has no scores; expected the per-scorer scores Inspect logs")
         for judge, score in scores.items():
             observations.append(
                 Observation(

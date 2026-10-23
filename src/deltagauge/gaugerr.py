@@ -178,9 +178,7 @@ def compare_all(run_set: RunSet) -> tuple[Delta, ...]:
     return tuple(_delta(scores, budget, a, b) for a, b in combinations(sorted(scores), 2))
 
 
-def _delta(
-    scores: dict[str, float], budget: ErrorBudget, model_a: str, model_b: str
-) -> Delta:
+def _delta(scores: dict[str, float], budget: ErrorBudget, model_a: str, model_b: str) -> Delta:
     for model in (model_a, model_b):
         if model not in scores:
             raise ValueError(

@@ -211,9 +211,7 @@ def test_missing_cells_are_named() -> None:
 
 
 def test_duplicated_cells_are_rejected() -> None:
-    duplicated = _crossed(items=2, judges=2, runs=2).observations + (
-        _observation(score=41.0),
-    )
+    duplicated = _crossed(items=2, judges=2, runs=2).observations + (_observation(score=41.0),)
 
     with pytest.raises(ValueError, match="duplicated cells"):
         RunSet(observations=duplicated)
@@ -373,9 +371,7 @@ def test_promptfoo_import_derives_the_judge_dimension(tmp_path: Path) -> None:
 
 def test_promptfoo_export_without_repeats_asks_for_repeat(tmp_path: Path) -> None:
     export = tmp_path / "single.json"
-    export.write_text(
-        json.dumps(_promptfoo_export(("spark-open",), repeats=1)), encoding="utf-8"
-    )
+    export.write_text(json.dumps(_promptfoo_export(("spark-open",), repeats=1)), encoding="utf-8")
 
     with pytest.raises(ValueError, match="--repeat"):
         promptfoo.load(export)

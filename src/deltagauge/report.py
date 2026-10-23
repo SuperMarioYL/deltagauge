@@ -93,8 +93,10 @@ def render_report(run_set: RunSet, *, data_source: str) -> str:
 
 
 def _verdict_row(comparison: Delta) -> str:
-    delta = f"+{format_score(comparison.delta)}" if comparison.delta > 0 else format_score(
-        comparison.delta
+    delta = (
+        f"+{format_score(comparison.delta)}"
+        if comparison.delta > 0
+        else format_score(comparison.delta)
     )
     return (
         f"| {comparison.model_a} | {comparison.model_b} "

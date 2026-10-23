@@ -54,9 +54,7 @@ def _read_export(path: Path) -> tuple[list[object], dict[str, object]]:
             "`promptfoo eval -o out.json` writes"
         ) from error
     if not isinstance(document, dict):
-        raise ValueError(
-            f"{path.name}: not a promptfoo JSON export (expected a JSON object)"
-        )
+        raise ValueError(f"{path.name}: not a promptfoo JSON export (expected a JSON object)")
 
     summary = document.get("results")
     if isinstance(summary, dict):
@@ -67,8 +65,7 @@ def _read_export(path: Path) -> tuple[list[object], dict[str, object]]:
         results = None
     if not isinstance(results, list):
         raise ValueError(
-            f"{path.name}: no results array; expected the file "
-            "`promptfoo eval -o out.json` writes"
+            f"{path.name}: no results array; expected the file `promptfoo eval -o out.json` writes"
         )
     config = document.get("config")
     return results, config if isinstance(config, dict) else {}

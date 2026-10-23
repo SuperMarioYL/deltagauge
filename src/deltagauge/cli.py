@@ -24,9 +24,7 @@ from deltagauge.report import format_score, render_report
 
 DEMO_DATASET = "spark-open-vs-qwen3.8-flash-next.csv"
 
-RUN_DATA_HELP = (
-    f"Run data CSV with {', '.join(CANONICAL_COLUMNS)} columns. Defaults to the bundled demo dataset."
-)
+RUN_DATA_HELP = f"Run data CSV with {', '.join(CANONICAL_COLUMNS)} columns. Defaults to the bundled demo dataset."
 
 
 class Source(str, Enum):
@@ -100,9 +98,7 @@ def _root() -> None:
 @app.command()
 def ingest(
     run_data: Path = typer.Argument(..., metavar="RUN_DATA", help="The export to normalize."),
-    source: Source = typer.Option(
-        Source.csv, "--from", "-f", help="Input format of RUN_DATA."
-    ),
+    source: Source = typer.Option(Source.csv, "--from", "-f", help="Input format of RUN_DATA."),
     out: Path = typer.Option(
         Path("runs.csv"), "--out", "-o", help="Where to write the canonical run set CSV."
     ),
