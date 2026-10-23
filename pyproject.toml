@@ -52,6 +52,9 @@ deltagauge = "deltagauge.cli:main"
 test = ["pytest>=8.0"]
 dev = ["pytest>=8.0", "ruff>=0.6"]
 
+[dependency-groups]
+test = ["pytest>=8.0"]
+
 [tool.uv]
 default-groups = ["test"]
 
