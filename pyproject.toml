@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "deltagauge"
+version = "0.1.0"
+description = "为模型评测与选型团队量化评测系统误差、判断基准分差是否真实。"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "SuperMarioYL" }]
+keywords = [
+    "llm",
+    "evaluation",
+    "gauge-rr",
+    "measurement",
+    "benchmark",
+    "llm-as-judge",
+    "cli",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Natural Language :: Chinese (Simplified)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "pydantic>=2.9",
+    "typer>=0.12",
+    "rich>=13.9",
+    "numpy>=2.1",
+    "scipy>=1.14",
+]
+
+[project.urls]
+Homepage = "https://github.com/SuperMarioYL/deltagauge"
+Repository = "https://github.com/SuperMarioYL/deltagauge"
+Issues = "https://github.com/SuperMarioYL/deltagauge/issues"
+
+[project.scripts]
+deltagauge = "deltagauge.cli:main"
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[tool.uv]
+default-groups = ["test"]
+
+# Import package lives at src/deltagauge (see the plan's target file layout),
+# so hatchling needs the explicit src-layout package path.
+[tool.hatch.build.targets.wheel]
+packages = ["src/deltagauge"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src",
+    "tests",
+    "examples",
+    "docs",
+    "assets",
+    "LICENSE",
+    "README.md",
+    "README.en.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# Explicit and stable: the classic ruff default ruleset. The repo pins this so
+# CI stays deterministic across ruff releases (typer CLIs legitimately call
+# Option()/Argument() in defaults, which broader rule sets would flag).
+select = ["E4", "E7", "E9", "F", "I"]
