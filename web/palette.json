@@ -1,0 +1,38 @@
+{
+  "mode": "auto",
+  "id": "7556e6-c86ae7-acb7f6-baf086ee7998",
+  "identity": "https://github.com/supermarioyl/deltagauge",
+  "primary": "#7556e6",
+  "secondary": "#c86ae7",
+  "highlight": "#acb7f6",
+  "dark": {
+    "bg": "#060712",
+    "panel": "#0d101f",
+    "code": "#0c0d1d",
+    "ink": "#eef1fd",
+    "muted": "#9b9cc4",
+    "line": "#1e1841",
+    "primary": "#8266e8",
+    "secondary": "#c86ae7",
+    "highlight": "#acb7f6",
+    "accent": "#8266e8",
+    "buttonStart": "#7556e6",
+    "buttonEnd": "#a357bd",
+    "buttonText": "#ffffff"
+  },
+  "light": {
+    "bg": "#faf9fe",
+    "panel": "#f8f7fe",
+    "code": "#f5f3fd",
+    "ink": "#171630",
+    "muted": "#5b5e88",
+    "line": "#d5cbf7",
+    "primary": "#7556e6",
+    "secondary": "#9b52b2",
+    "highlight": "#686e94",
+    "accent": "#7556e6",
+    "buttonStart": "#7556e6",
+    "buttonEnd": "#a357bd",
+    "buttonText": "#ffffff"
+  }
+}

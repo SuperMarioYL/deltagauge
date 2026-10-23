@@ -1,0 +1,338 @@
+{
+  "schema": 3,
+  "name": "DeltaGauge",
+  "github": "https://github.com/SuperMarioYL/deltagauge",
+  "host": "deltagauge.lei6393.com",
+  "palette": "auto",
+  "lang": {
+    "primary": "zh",
+    "toggle": true
+  },
+  "meta": {
+    "visual_profile": "neon-particle",
+    "demo_source": "docs/demo-results.json",
+    "implementation_version": "0.1.0"
+  },
+  "hero": {
+    "eyebrow": {
+      "zh": "LLM 评测 · gauge R&R 误差预算",
+      "en": "LLM evals · gauge R&R error budget"
+    },
+    "headline": {
+      "zh": "把一分之差\n判定成 REAL 或 NOISE",
+      "en": "Turn a one-point gap\ninto REAL or NOISE"
+    },
+    "sub": {
+      "zh": "DeltaGauge 把质量工程的 gauge R&R 搬进 LLM 评测：用你已有的重复运行和多个 judge，把分数方差拆成重复性与再现性，给出这套评测系统自己的误差预算和判定限。不调用任何模型。",
+      "en": "DeltaGauge transplants gauge R&R from quality engineering into LLM evals. It uses the repeat runs and judges you already have to split score variance into repeatability and reproducibility, then reports your eval system's own error budget and decision limit. No model calls involved."
+    },
+    "href": "#quickstart",
+    "cta": {
+      "zh": "开始使用",
+      "en": "Get started"
+    },
+    "ctaGithub": {
+      "zh": "在 GitHub 查看",
+      "en": "View on GitHub"
+    }
+  },
+  "scene": {
+    "kind": "neon-graph",
+    "fallback": "/assets/presentation/hero-static-dark.svg",
+    "fallbackLight": "/assets/presentation/hero-static-light.svg",
+    "caption": {
+      "zh": "示意场景：误差预算把一个分差拆到它的来源",
+      "en": "Illustrative: the error budget splits a delta into its sources"
+    }
+  },
+  "advantages": [
+    {
+      "title": {
+        "zh": "一条命令，一个误差预算",
+        "en": "One command, one error budget"
+      },
+      "body": {
+        "zh": "deltagauge gauge 打印四个方差分量——重复性、再现性、item × judge 交互、零件间差异——加上两种 %GRR 和判定限，单位都是分。示例数据上 Total GRR 是 0.692 分，判定限 ±1.4 分。",
+        "en": "deltagauge gauge prints four variance components - repeatability, reproducibility, the item x judge interaction, part-to-part - plus both %GRR forms and the decision limit, all in score points. On the bundled demo data Total GRR is 0.692 points and the decision limit is ±1.4."
+      }
+    },
+    {
+      "title": {
+        "zh": "判定只有一条规则",
+        "en": "One rule decides the verdict"
+      },
+      "body": {
+        "zh": "compare 给出 A - B 的分差：|delta| > decision_limit 是 REAL，否则 NOISE。判定限是量具自身的 95% 测量限（z × Total GRR），回答的是「这个分差能否与测量系统区分」，不是「两个模型是否等价」。",
+        "en": "compare reports the A - B delta: |delta| > decision_limit is REAL, otherwise NOISE. The limit is the instrument's own 95% measurement limit (z × Total GRR); it answers whether the delta can be told apart from the measurement system, not whether two models are equivalent."
+      }
+    },
+    {
+      "title": {
+        "zh": "读你已有的导出，不替换你的 harness",
+        "en": "Reads your existing exports, replaces nothing"
+      },
+      "body": {
+        "zh": "promptfoo、Inspect 和 canonical CSV 三个导入器把导出规范化成 model,item,judge,run,score。缺少重复维度的导出会被直接拒绝，并点名要补哪个参数——不会凭空造出一个 run 或 judge 维度。",
+        "en": "Three importers - promptfoo, Inspect and canonical CSV - normalize an export into model,item,judge,run,score. An export with no repetition dimension is refused outright and the missing flag is named, rather than decomposed into a fabricated run or judge dimension."
+      }
+    }
+  ],
+  "story": {
+    "intro": {
+      "title": {
+        "zh": "先量出评测系统自己的误差",
+        "en": "Measure the instrument before the model"
+      },
+      "body": {
+        "zh": "评测团队每天都在拿一个分差做决定：两个模型、两个版本，谁高一点就写进结论。但这一分里有多少是模型之间的真实差距，有多少是评测系统自己贡献的——judge 的松紧、重复运行之间的抖动——没人报这个数。质量工程几十年前就解决了这个问题的通用形式：gauge R&R。同一批零件用同一把量具反复测，再换几把量具测，把方差拆成重复性与再现性，最后给出量具自己的误差预算。DeltaGauge 把这件事搬进 LLM 评测：你的重复运行和多个 judge 早就在那里，只是从来没人把它们的方差拆开。拆开之后，争论变成数字。",
+        "en": "Every eval team decides on a score delta every day: two models, two versions, whoever scores higher goes into the conclusion. But how much of that point is a real gap between the models, and how much is contributed by the measurement system itself - one judge being harsher, one repeat differing from the next? Nobody reports that number. Quality engineering solved the general form of this decades ago with gauge R&R: measure the same parts repeatedly with the same gauge, then with several gauges, split the variance into repeatability and reproducibility, and report the gauge's own error budget. DeltaGauge transplants exactly that into LLM evals. Your repeat runs and multiple judges are already there, and nobody has decomposed their variance. Once decomposed, the argument becomes a number."
+      }
+    },
+    "sections": [
+      {
+        "title": {
+          "zh": "一次判定要走的路",
+          "en": "The path to one verdict"
+        },
+        "body": {
+          "zh": "五条命令，每一步都在 60 秒内完成：describe 打印设计，gauge 打印误差预算，compare 给出 REAL / NOISE，ingest 把任意导出规范化，report 写出可粘贴的 Markdown。全部在一个进程里完成，文件进、文件出，没有服务，也没有数据库。",
+          "en": "Five commands, each under 60 seconds: describe prints the design, gauge prints the error budget, compare returns REAL / NOISE, ingest normalizes any supported export, and report writes pasteable Markdown. Everything runs in one process, files in and files out - no server, no database."
+        },
+        "image": {
+          "light": "/assets/presentation/process-light.svg",
+          "dark": "/assets/presentation/process-dark.svg",
+          "alt": {
+            "zh": "describe、gauge、compare、ingest、report 五步流程，以及零件间差异如何留在 GRR 之外",
+            "en": "The five-step describe, gauge, compare, ingest, report flow, and how part-to-part spread stays outside GRR"
+          },
+          "mobile": {
+            "light": "/assets/presentation/process-mobile-light.svg",
+            "dark": "/assets/presentation/process-mobile-dark.svg"
+          }
+        }
+      },
+      {
+        "title": {
+          "zh": "模块分工",
+          "en": "How the pieces fit"
+        },
+        "body": {
+          "zh": "importers/* 每种导出格式一个适配器，统一产出 canonical Observation；model.py 加平衡性校验，不是完全交叉的设计会被拒绝并列出缺了哪些 cell；gaugerr.py 是唯一的数学部分——方差分解与判定限；report.py / cli.py 负责终端表格、Markdown 报告和命令行入口。",
+          "en": "importers/* holds one adapter per export format, each producing canonical Observation rows; model.py adds the balance check, rejecting a design that is not fully crossed and naming the missing cells; gaugerr.py is the one piece of real math - the variance decomposition and the decision limit; report.py / cli.py own the terminal tables, the Markdown report and the CLI entry point."
+        },
+        "image": {
+          "light": "/assets/presentation/architecture-light.svg",
+          "dark": "/assets/presentation/architecture-dark.svg",
+          "alt": {
+            "zh": "promptfoo、Inspect、canonical CSV 经 importers 到 RunSet、gaugerr、ErrorBudget、compare 与 report.md 的数据流",
+            "en": "Data flow from promptfoo, Inspect and canonical CSV through importers to RunSet, gaugerr, ErrorBudget, compare and report.md"
+          },
+          "mobile": {
+            "light": "/assets/presentation/architecture-mobile-light.svg",
+            "dark": "/assets/presentation/architecture-mobile-dark.svg"
+          }
+        }
+      },
+      {
+        "title": {
+          "zh": "它站在哪一层",
+          "en": "Where it sits"
+        },
+        "body": {
+          "zh": "promptfoo 和 Inspect 负责跑评测、给单次运行打分，排行榜负责聚合与排名；DeltaGauge 只做它们之后那一步——在重复运行上做方差分解，给出判定限与 REAL / NOISE。我们读它们的导出，不替换它们。v0.1 不做 Slack / Jira / CI 平台集成，也没有 Web UI。",
+          "en": "promptfoo and Inspect run the eval and score a single run; leaderboards aggregate and rank. DeltaGauge does only the step after that - variance decomposition over repeat runs, yielding a decision limit and a REAL / NOISE verdict. We read their exports; we do not replace them. v0.1 ships no Slack, Jira or CI-provider integration and no web UI."
+        },
+        "image": {
+          "light": "/assets/presentation/integrations-light.svg",
+          "dark": "/assets/presentation/integrations-dark.svg",
+          "alt": {
+            "zh": "promptfoo、Inspect、排行榜与 DeltaGauge 的职责分工",
+            "en": "Division of responsibility between promptfoo, Inspect, leaderboards and DeltaGauge"
+          },
+          "mobile": {
+            "light": "/assets/presentation/integrations-mobile-light.svg",
+            "dark": "/assets/presentation/integrations-mobile-dark.svg"
+          }
+        }
+      }
+    ],
+    "details": [
+      {
+        "title": {
+          "zh": "canonical CSV 与输入要求",
+          "en": "Canonical CSV and what the input must be"
+        },
+        "body": {
+          "zh": "v0.1 没有配置文件，行为只由输入格式和命令行参数决定。canonical CSV 的表头必须是 model,item,judge,run,score（多余列忽略，顺序无关）；设计必须完全交叉且平衡，否则会被拒绝并点名缺了什么。promptfoo 需要重复维度（--repeat n，n ≥ 2）和至少 2 个判分 provider；Inspect 需要 epoch 重复（--epochs n，n ≥ 2），且每个样本被 2 个以上 scorer 打过。",
+          "en": "v0.1 has no config file; behavior follows from the input format and the command line flags. The canonical CSV header must be model,item,judge,run,score (extra columns ignored, order irrelevant), and the design must be fully crossed and balanced or it is rejected with the missing cells named. promptfoo needs a repetition dimension (--repeat n, n >= 2) and at least 2 grading providers; Inspect needs epoch repeats (--epochs n, n >= 2) with every sample scored by more than one scorer."
+        },
+        "code": "model,item,judge,run,score\nspark-open,item-001,judge-a,1,38.4\nspark-open,item-001,judge-b,1,39.1"
+      },
+      {
+        "title": {
+          "zh": "估计算法的假设与读法",
+          "en": "What the estimator assumes"
+        },
+        "body": {
+          "zh": "估计算法是经典交叉随机效应 ANOVA（AIAG MSA），需要完全交叉的平衡设计。有界分数（0/1，或 1–5）在极端取值下会偏离正态假设，v0.1 不对此做校正；方差分量估计为负时按 AIAG 惯例截断到 0。judge 只有 2–3 个时再现性估计的抽样波动较大，gauge 给出的分量要按这个精度读。",
+          "en": "The estimator is a classical crossed random-effects ANOVA (AIAG MSA) and needs a fully crossed, balanced design. Bounded scores (0/1, or 1-5) depart from normality at the extremes and v0.1 does not correct for that; components that estimate below zero are clamped to zero, the AIAG convention. With only 2-3 judges the reproducibility estimate is noisy, so read the components gauge prints with that precision in mind."
+        },
+        "code": "deltagauge gauge runs.csv\ndeltagauge compare model-a model-b runs.csv"
+      }
+    ]
+  },
+  "demo": {
+    "title": {
+      "zh": "运行真实记录",
+      "en": "Recorded run"
+    },
+    "note": {
+      "zh": "v0.1 的真实终端输出，录自 tag v0.1.0 的仓库检出（Python 3.13.12，不联网、不调用模型）。示例数据集是合成的：它被生成成恰好带 1.0 分均值差和已知的 judge / run 噪声，只用来演示流程——它不是任何已发布的 benchmark 结果，39 和 40 只是标签，不是真实分数。",
+      "en": "Real v0.1 terminal output, recorded from a checkout at tag v0.1.0 (Python 3.13.12, no network, no model calls). The demo dataset is synthetic: it is generated to carry a one-point mean gap plus known judge and run noise, purely to demonstrate the flow. It is not a published benchmark result, and 39 and 40 are labels, not real scores."
+    },
+    "source": "https://github.com/SuperMarioYL/deltagauge/blob/main/docs/demo-results.json",
+    "steps": [
+      {
+        "label": {
+          "zh": "describe：我到底跑了什么",
+          "en": "describe: what did I actually run"
+        },
+        "body": {
+          "zh": "不带数据文件时作用在自带的示例数据上，打印模型、题目、judge、重复次数、分数范围与平衡性。",
+          "en": "Without a data file it runs on the bundled demo data and prints models, items, judges, repeats, score range and balance."
+        },
+        "image": "/assets/presentation/demo-describe-light.svg",
+        "imageDark": "/assets/presentation/demo-describe-dark.svg",
+        "command": "deltagauge describe",
+        "output": "spark-open-vs-qwen3.8-flash-next.csv\n2 models, 103 items, 3 judges, 3 runs = 1,854 observations, balanced\n models   qwen3.8-flash-next, spark-open\n items    item-001 … item-103\n judges   judge-a, judge-b, judge-c\n runs     1, 2, 3\n score    3.3 … 77.1"
+      },
+      {
+        "label": {
+          "zh": "gauge：这套评测系统自己的误差预算",
+          "en": "gauge: the eval system's own error budget"
+        },
+        "body": {
+          "zh": "四个方差分量、两种 %GRR 与判定限。零件间差异是信号（题目本身的难易差异），不计入 GRR，只进 %GRR 的分母；Total GRR 才是评测系统自己的误差。",
+          "en": "Four variance components, both %GRR forms and the decision limit. Part-to-part is signal (items genuinely differ in difficulty): it stays out of GRR and only enters the %GRR denominator. Total GRR is the measurement system's own error."
+        },
+        "image": "/assets/presentation/demo-gauge-light.svg",
+        "imageDark": "/assets/presentation/demo-gauge-dark.svg",
+        "command": "deltagauge gauge",
+        "output": " variance component                          SD   variance   % of total\n ──────────────────────────────────────────────────────────────────────\n Repeatability (same judge, same item)    0.499      0.249        0.10%\n Reproducibility (judge to judge)         0.436      0.190        0.07%\n Item x judge interaction                 0.201      0.040        0.02%\n Part-to-part (model x item)             16.175    261.629       99.82%\n Total GRR                                0.692      0.479        0.18%\n Total variation                         16.190    262.108      100.00%\n%GRR  0.18% of the variance, 4.28% of the study variation\ndecision limit  ±1.4"
+      },
+      {
+        "label": {
+          "zh": "compare：这一分之差是真的吗",
+          "en": "compare: is the one-point delta real"
+        },
+        "body": {
+          "zh": "给出 A - B 的分差、判定限和 REAL / NOISE 判定。这里的分差 −1.0 落在 ±1.4 之内，所以是 NOISE——它无法与这套测量系统本身区分。",
+          "en": "Reports the A - B delta, the decision limit and the REAL / NOISE verdict. Here the -1.0 delta falls inside ±1.4, so it is NOISE: it cannot be told apart from the measurement system itself."
+        },
+        "image": "/assets/presentation/demo-compare-light.svg",
+        "imageDark": "/assets/presentation/demo-compare-dark.svg",
+        "command": "deltagauge compare spark-open qwen3.8-flash-next",
+        "output": "delta = -1.0    decision limit = ±1.4    verdict: NOISE\n\n spark-open           39.0\n qwen3.8-flash-next   40.0"
+      },
+      {
+        "label": {
+          "zh": "ingest：把你的导出规范化",
+          "en": "ingest: normalize your export"
+        },
+        "body": {
+          "zh": "把任一种支持的导出规范化为 canonical run set。示例用自带的 CSV，换成自己的 promptfoo / Inspect 导出同理。",
+          "en": "Normalizes any supported export into the canonical run set. This recording uses the bundled CSV; your own promptfoo / Inspect export works the same way."
+        },
+        "image": "/assets/presentation/demo-ingest-light.svg",
+        "imageDark": "/assets/presentation/demo-ingest-dark.svg",
+        "command": "deltagauge ingest examples/spark-open-vs-qwen3.8-flash-next.csv --from csv --out runs.csv",
+        "output": "wrote runs.csv\n2 models, 103 items, 3 judges, 3 runs = 1,854 observations, balanced"
+      },
+      {
+        "label": {
+          "zh": "report：写成可粘贴的 Markdown",
+          "en": "report: the pasteable Markdown"
+        },
+        "body": {
+          "zh": "把设计表、误差预算表、每个模型对的判定行和估计量的假设写成一份 Markdown，可以直接贴进选型或采购文档。",
+          "en": "Writes the design table, the error budget, one verdict row per model pair and the estimator's assumptions into a Markdown file you can paste into a selection or procurement writeup."
+        },
+        "image": "/assets/presentation/demo-report-light.svg",
+        "imageDark": "/assets/presentation/demo-report-dark.svg",
+        "command": "deltagauge report --out report.md",
+        "output": "wrote report.md"
+      }
+    ]
+  },
+  "quickstart": {
+    "title": {
+      "zh": "五条命令跑通",
+      "en": "Five commands to the first verdict"
+    },
+    "body": {
+      "zh": "需要 Python 3.12+。示例数据随仓库提供，不接自己的数据也能跑完整条路径；换成自己的数据时只有 ingest 的输入会变。",
+      "en": "Python 3.12+ required. The demo dataset ships with the repo, so the whole path runs without your own data; with your own data only the ingest input changes."
+    },
+    "steps": [
+      {
+        "title": {
+          "zh": "安装",
+          "en": "Install"
+        },
+        "code": "uv tool install git+https://github.com/SuperMarioYL/deltagauge\ndeltagauge --help"
+      },
+      {
+        "title": {
+          "zh": "看设计和误差预算",
+          "en": "Design and error budget"
+        },
+        "code": "deltagauge describe\ndeltagauge gauge"
+      },
+      {
+        "title": {
+          "zh": "判定一个分差",
+          "en": "Judge a delta"
+        },
+        "code": "deltagauge compare spark-open qwen3.8-flash-next"
+      },
+      {
+        "title": {
+          "zh": "换成自己的导出",
+          "en": "Switch to your own export"
+        },
+        "code": "deltagauge ingest ./evals.json --from promptfoo --out runs.csv\ndeltagauge gauge runs.csv\ndeltagauge compare model-a model-b runs.csv"
+      },
+      {
+        "title": {
+          "zh": "写出 Markdown",
+          "en": "Write the Markdown"
+        },
+        "code": "deltagauge report --out report.md"
+      }
+    ]
+  },
+  "limitations": [
+    {
+      "zh": "自带示例数据是合成的，39 和 40 只是标签；本项目不附带任何跨实验室语料或已发布的 benchmark 数据。",
+      "en": "The bundled demo data is synthetic and 39 and 40 are labels; this project ships no cross-lab corpus and no published benchmark data."
+    },
+    {
+      "zh": "判定限是量具自身的 95% 测量限（z × Total GRR），不是题目均值的标准误：它回答「这个分差能否与测量系统区分」，不回答「两个模型是否等价」。",
+      "en": "The decision limit is the instrument's own 95% measurement limit (z × Total GRR), not the standard error of a mean over items: it answers whether the delta can be told apart from the measurement system, not whether two models are equivalent."
+    },
+    {
+      "zh": "v0.1 不调用任何模型、不实现 judge、不跑评测；没有 Web UI 或面板，只有 CLI 与 Markdown，也没有 Slack / Jira / CI 平台集成。",
+      "en": "v0.1 makes no model calls, implements no judge and runs no eval; there is no web UI or dashboard, just the CLI and Markdown, and no Slack, Jira or CI-provider integration."
+    },
+    {
+      "zh": "托管 eval CI gate 是 v0.2 的产品方向，不是 v0.1 的代码；价格（约 $199–499 / 月 / 团队，或约 $49 / 座位）是待验证的假设，不是报价。v0.1 不含任何托管服务、HTTP API、账号或计费代码。",
+      "en": "The hosted eval CI gate is a v0.2 product direction, not v0.1 code; the pricing (about $199-499 per team per month, or about $49 per seat) is an unvalidated hypothesis, not a quote. v0.1 contains no hosted service, HTTP API, account or billing code."
+    }
+  ],
+  "footer": {
+    "tag": {
+      "zh": "Python 3.12+ · MIT · 示例数据为合成数据",
+      "en": "Python 3.12+ · MIT · demo data is synthetic"
+    }
+  }
+}
