@@ -1,0 +1,103 @@
+{
+  "product": "deltagauge",
+  "version": "0.1.0",
+  "recorded_at": "2026-10-24",
+  "recorded_from": "repository checkout at tag v0.1.0",
+  "environment": {
+    "install": "uv sync",
+    "python": "3.13.12",
+    "platform": "macOS 27.0.0 arm64",
+    "network": "none required",
+    "model_calls": "none"
+  },
+  "input": {
+    "path": "examples/spark-open-vs-qwen3.8-flash-next.csv",
+    "columns": ["model", "item", "judge", "run", "score"],
+    "rows": 1854,
+    "design": {
+      "models": ["spark-open", "qwen3.8-flash-next"],
+      "items": 103,
+      "judges": ["judge-a", "judge-b", "judge-c"],
+      "runs": 3,
+      "balanced": true,
+      "score_min": 3.3,
+      "score_max": 77.1
+    },
+    "provenance": "synthetic",
+    "provenance_note": "Generated for this demo to carry a known one-point mean gap between the two models plus judge and run noise. It is NOT a published benchmark result and the model names are labels only."
+  },
+  "commands": [
+    {
+      "command": "deltagauge describe",
+      "exit_code": 0,
+      "output": [
+        "spark-open-vs-qwen3.8-flash-next.csv",
+        "2 models, 103 items, 3 judges, 3 runs = 1,854 observations, balanced",
+        " models   qwen3.8-flash-next, spark-open",
+        " items    item-001 … item-103",
+        " judges   judge-a, judge-b, judge-c",
+        " runs     1, 2, 3",
+        " score    3.3 … 77.1"
+      ]
+    },
+    {
+      "command": "deltagauge gauge",
+      "exit_code": 0,
+      "output": {
+        "repeatability_sd": 0.4993,
+        "reproducibility_sd": 0.4358,
+        "interaction_sd": 0.2005,
+        "part_to_part_sd": 16.1749,
+        "total_grr_sd": 0.6924,
+        "total_variation_sd": 16.1898,
+        "pct_contribution": 0.1829,
+        "pct_study_variation": 4.2768,
+        "decision_limit": 1.3571,
+        "decision_limit_printed": 1.4
+      }
+    },
+    {
+      "command": "deltagauge compare spark-open qwen3.8-flash-next",
+      "exit_code": 0,
+      "output": {
+        "model_a": "spark-open",
+        "model_b": "qwen3.8-flash-next",
+        "score_a": 39.0,
+        "score_b": 40.0,
+        "delta": -1.0,
+        "decision_limit": 1.4,
+        "verdict": "NOISE"
+      }
+    },
+    {
+      "command": "deltagauge ingest examples/spark-open-vs-qwen3.8-flash-next.csv --from csv --out runs.csv",
+      "exit_code": 0,
+      "output": [
+        "wrote runs.csv",
+        "2 models, 103 items, 3 judges, 3 runs = 1,854 observations, balanced"
+      ]
+    },
+    {
+      "command": "deltagauge report --out report.md",
+      "exit_code": 0,
+      "artifact": "report.md",
+      "artifact_bytes": 2015,
+      "output": ["wrote report.md"]
+    }
+  ],
+  "demo_recording": {
+    "script": "docs/demo.tape",
+    "gif": "docs/demo.gif",
+    "frames": 638,
+    "size": "1240x620",
+    "reproduce": "vhs docs/demo.tape"
+  },
+  "limitations": [
+    "The bundled dataset is synthetic; no claim in the README or the report is derived from published benchmark scores.",
+    "v0.1 is a classical crossed random-effects ANOVA gauge R&R. Bootstrap and Bayesian estimators are out of scope.",
+    "The decomposition needs a balanced, fully crossed model x item x judge x run design; unbalanced exports are rejected with the missing cells named.",
+    "The decision limit is the instrument's own 95% measurement limit (z * total GRR). It is a resolution limit, not the standard error of a mean over items.",
+    "DeltaGauge runs no evaluations: no model calls, no judge implementation, no harness.",
+    "The hosted eval CI gate is a v0.2 product decision; v0.1 ships no service, account or billing code."
+  ]
+}
