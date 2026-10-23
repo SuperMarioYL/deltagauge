@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "deltagauge"
-version = "0.1.0"
+dynamic = ["version"]
 description = "为模型评测与选型团队量化评测系统误差、判断基准分差是否真实。"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -50,10 +50,19 @@ deltagauge = "deltagauge.cli:main"
 
 [project.optional-dependencies]
 test = ["pytest>=8.0"]
-dev = ["pytest>=8.0", "ruff>=0.6"]
+dev = ["pytest>=8.0", "ruff==0.16.8"]
 
 [dependency-groups]
-test = ["pytest>=8.0"]
+# CI installs exactly this group from uv.lock, so lint stays deterministic:
+# ruff's default ruleset moves between releases and would silently re-break the
+# gate. Bump the pin deliberately, with the lint re-run.
+test = ["pytest>=8.0", "ruff==0.16.8"]
+
+[tool.hatch.version]
+# VERSION is the single source of the release version; the manifest reads it.
+source = "regex"
+path = "VERSION"
+pattern = "(?P<version>\\d+\\.\\d+\\.\\d+)"
 
 [tool.uv]
 default-groups = ["test"]
@@ -63,6 +72,11 @@ default-groups = ["test"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/deltagauge"]
 
+[tool.hatch.build.targets.wheel.force-include]
+# The demo dataset lives in examples/ and is copied into the package, so the
+# no-argument commands work from `uv tool install` as well as from a checkout.
+"examples/spark-open-vs-qwen3.8-flash-next.csv" = "deltagauge/data/spark-open-vs-qwen3.8-flash-next.csv"
+
 [tool.hatch.build.targets.sdist]
 include = [
     "src",
@@ -70,6 +84,8 @@ include = [
     "examples",
     "docs",
     "assets",
+    "VERSION",
+    "CHANGELOG.md",
     "LICENSE",
     "README.md",
     "README.en.md",
