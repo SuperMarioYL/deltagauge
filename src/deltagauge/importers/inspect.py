@@ -37,6 +37,8 @@ from pathlib import Path
 from deltagauge.model import MIN_JUDGES, MIN_RUNS, Observation, RunSet
 
 LOG_SUFFIX = ".eval"
+JSON_SUFFIX = ".json"
+LOG_SUFFIXES = (LOG_SUFFIX, JSON_SUFFIX)
 HEADER_MEMBER = "header.json"
 SAMPLES_PREFIX = "samples/"
 
@@ -52,11 +54,18 @@ def load(path: Path) -> RunSet:
 
 
 def _log_paths(path: Path) -> list[Path]:
-    """The Inspect logs named by ``path``: the file itself, or every log in a directory."""
+    """The Inspect logs named by ``path``: the file itself, or every log in a directory.
+
+    A directory holds both zipped ``.eval`` logs and the plain ``.json`` logs an
+    explicit ``inspect log convert`` writes; skipping either would silently drop a
+    model from a multi-model comparison.
+    """
     if path.is_dir():
-        logs = sorted(path.glob(f"*{LOG_SUFFIX}"))
+        logs = sorted(
+            entry for entry in path.iterdir() if entry.suffix in LOG_SUFFIXES and entry.is_file()
+        )
         if not logs:
-            raise ValueError(f"{path}: no {LOG_SUFFIX} logs in this directory")
+            raise ValueError(f"{path}: no {LOG_SUFFIX} or {JSON_SUFFIX} logs in this directory")
         return logs
     if not path.is_file():
         raise FileNotFoundError(f"run data file not found: {path}")

@@ -171,6 +171,18 @@ def _inspect_log(
     return buffer.getvalue()
 
 
+def _write_csv(path: Path, run_set: RunSet) -> Path:
+    """Write a run set in the canonical CSV format the CLI reads back."""
+    rows = ["model,item,judge,run,score"]
+    rows.extend(
+        f"{observation.model},{observation.item},{observation.judge},"
+        f"{observation.run},{observation.score!r}"
+        for observation in run_set.observations
+    )
+    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    return path
+
+
 # --- m1: canonical schema and balance validation ----------------------------
 
 
@@ -481,6 +493,8 @@ def test_cli_describe_gauge_compare_and_report_run_end_to_end(tmp_path: Path) ->
     assert gauged.exit_code == 0, gauged.output
     assert "Repeatability" in gauged.output
     assert "decision limit" in gauged.output
+    assert "Total variation" in gauged.output
+    assert "100.00%" in gauged.output
 
     judged = runner.invoke(app, ["compare", DEMO_MODEL_A, DEMO_MODEL_B, str(DEMO_CSV)])
     assert judged.exit_code == 0, judged.output
@@ -509,3 +523,93 @@ def test_cli_fails_loudly_on_an_unbalanced_design(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "not fully crossed" in result.output
+
+
+# --- v0.2: display escaping, log directories and the version lockstep -------
+
+
+def test_compare_shows_a_model_name_verbatim_in_the_table(tmp_path: Path) -> None:
+    csv_path = _write_csv(tmp_path / "markup.csv", _crossed(models=("x[/y]", "model-b")))
+
+    result = CliRunner().invoke(app, ["compare", "x[/y]", "model-b", str(csv_path)])
+
+    assert result.exit_code == 0, result.output
+    assert "x[/y]" in result.output
+    assert "NOISE" in result.output
+
+
+def test_report_keeps_a_pipe_in_a_model_name_inside_its_cell() -> None:
+    markdown = render_report(_crossed(models=("mod|el-a", "model-b")), data_source="pipe.csv")
+
+    row = next(line for line in markdown.splitlines() if "el-a" in line)
+    assert "mod\\|el-a" in row
+    assert row.count("|") - row.count("\\|") == 8
+
+
+def test_inspect_directory_merges_eval_and_converted_json_logs(tmp_path: Path) -> None:
+    directory = tmp_path / "logs"
+    directory.mkdir()
+    (directory / "model-a.eval").write_bytes(_inspect_log(model="model-a"))
+    converted = {
+        "version": 2,
+        "status": "success",
+        "eval": {"model": "model-b"},
+        "samples": [
+            {
+                "id": f"item-{item_index:03d}",
+                "epoch": epoch,
+                "scores": {"judge-a": {"value": 40.0}, "judge-b": {"value": 40.0}},
+            }
+            for item_index in (1, 2)
+            for epoch in (1, 2)
+        ],
+    }
+    (directory / "model-b.json").write_text(json.dumps(converted), encoding="utf-8")
+
+    merged = inspect_logs.load(directory)
+
+    assert merged.design.models == ("model-a", "model-b")
+    assert len(merged.observations) == 16
+
+    json_only = tmp_path / "json-only"
+    json_only.mkdir()
+    (json_only / "model-b.json").write_text(json.dumps(converted), encoding="utf-8")
+    assert inspect_logs.load(json_only).design.models == ("model-b",)
+
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    with pytest.raises(ValueError, match=r"no \.eval or \.json logs"):
+        inspect_logs.load(empty)
+
+
+def test_a_zero_variance_budget_does_not_claim_100_percent(tmp_path: Path) -> None:
+    csv_path = _write_csv(tmp_path / "flat.csv", _crossed(score=40.0))
+
+    gauged = CliRunner().invoke(app, ["gauge", str(csv_path)])
+
+    assert gauged.exit_code == 0, gauged.output
+    assert "100.00%" not in gauged.output
+    assert "—" in gauged.output
+
+    markdown = render_report(csv_runs.load(csv_path), data_source="flat.csv")
+
+    assert "100.00%" not in markdown
+    assert "—" in markdown
+
+
+def test_every_version_surface_names_the_same_release() -> None:
+    version = (REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip()
+
+    for readme in ("README.md", "README.en.md"):
+        badge = (REPO_ROOT / readme).read_text(encoding="utf-8")
+        assert f"badge/version-{version}-" in badge, readme
+
+    site = json.loads((REPO_ROOT / "web" / "site.json").read_text(encoding="utf-8"))
+    assert site["meta"]["implementation_version"] == version
+
+    headings = [
+        line
+        for line in (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8").splitlines()
+        if line.startswith("## ")
+    ]
+    assert headings[0] == f"## {version}"

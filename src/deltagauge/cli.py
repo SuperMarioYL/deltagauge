@@ -20,7 +20,7 @@ from deltagauge.importers import csv as csv_runs
 from deltagauge.importers import inspect as inspect_logs
 from deltagauge.importers import promptfoo
 from deltagauge.model import CANONICAL_COLUMNS, Design, RunSet, validation_message
-from deltagauge.report import format_score, render_report
+from deltagauge.report import format_score, format_share, render_report
 
 DEMO_DATASET = "spark-open-vs-qwen3.8-flash-next.csv"
 
@@ -152,8 +152,8 @@ def compare(
     table = Table(box=box.SIMPLE, show_header=False, pad_edge=False)
     table.add_column(style="cyan", no_wrap=True)
     table.add_column(justify="right")
-    table.add_row(delta.model_a, format_score(delta.score_a))
-    table.add_row(delta.model_b, format_score(delta.score_b))
+    table.add_row(escape(delta.model_a), format_score(delta.score_a))
+    table.add_row(escape(delta.model_b), format_score(delta.score_b))
     console.print(table)
     console.print(
         f"[dim]{escape(label)} — `deltagauge gauge` shows the error budget behind the limit[/dim]"
@@ -255,6 +255,7 @@ def _print_design(label: str, design: Design) -> None:
 
 
 def _print_budget(budget: ErrorBudget) -> None:
+    total_variance = budget.total_variation**2
     table = Table(box=box.SIMPLE, show_header=True, pad_edge=False, header_style="bold")
     table.add_column("variance component", style="cyan", no_wrap=True)
     table.add_column("SD", justify="right")
@@ -265,26 +266,26 @@ def _print_budget(budget: ErrorBudget) -> None:
             component.label,
             f"{component.sd:.3f}",
             f"{component.variance:.3f}",
-            f"{component.share:.2f}%",
+            format_share(component.share, total_variance),
         )
     table.add_row(
         "Total GRR",
         f"{budget.total_grr:.3f}",
         f"{budget.total_grr**2:.3f}",
-        f"{budget.pct_contribution:.2f}%",
+        format_share(budget.pct_contribution, total_variance),
         style="bold",
     )
     table.add_row(
         "Total variation",
         f"{budget.total_variation:.3f}",
-        f"{budget.total_variation**2:.3f}",
-        "100.00%",
+        f"{total_variance:.3f}",
+        format_share(100.0, total_variance),
         style="bold",
     )
     console.print(table)
     console.print(
-        f"%GRR  {budget.pct_contribution:.2f}% of the variance, "
-        f"{budget.pct_study_variation:.2f}% of the study variation"
+        f"%GRR  {format_share(budget.pct_contribution, total_variance)} of the variance, "
+        f"{format_share(budget.pct_study_variation, budget.total_variation)} of the study variation"
     )
     console.print(f"decision limit  ±{format_score(budget.decision_limit)}")
 

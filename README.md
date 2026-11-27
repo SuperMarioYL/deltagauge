@@ -9,7 +9,7 @@
 ### 把质量工程的 gauge R&R 搬进模型评测：拆出重复性与再现性，直接告诉你这个分差是不是噪声。
 
 [![CI](https://github.com/SuperMarioYL/deltagauge/actions/workflows/ci.yml/badge.svg)](https://github.com/SuperMarioYL/deltagauge/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)](./VERSION)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue?style=flat-square)](./VERSION)
 [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Method](https://img.shields.io/badge/method-AIAG%20gauge%20R%26R-8957E5?style=flat-square)](./docs/demo-results.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
@@ -136,7 +136,7 @@ spark-open-vs-qwen3.8-flash-next.csv
 2 models, 103 items, 3 judges, 3 runs = 1,854 observations, balanced
 ```
 
-`report.md` 里是同一份结果，但可以贴：设计表、误差预算表、每个模型对的判定行，以及估计量的假设（ANOVA 模型、判定限的含义、v0.1 不做 bootstrap / Bayesian）。
+`report.md` 里是同一份结果，但可以贴：设计表、误差预算表、每个模型对的判定行，以及估计量的假设（ANOVA 模型、判定限的含义、本版不做 bootstrap / Bayesian）。
 
 > 示例数据是**合成的**：它被生成成恰好带 1.0 分均值差和已知的 judge / run 噪声，用来演示流程。它不是任何已发布的 benchmark 结果，39 和 40 只是标签，不是真实分数。
 
@@ -169,11 +169,11 @@ spark-open-vs-qwen3.8-flash-next.csv
 | 排行榜 / 聚合面板 | 聚合与排名（点估计） | 我们给一个点估计配上误差预算，不改排名 |
 | **DeltaGauge** | 在重复运行上做方差分解，给出判定限与 REAL / NOISE | — |
 
-v0.1 明确不做的事：不调用任何模型、不实现 judge、不跑评测（你已有的重复运行就是全部输入）；没有 Web UI 或面板，只有 CLI 与 Markdown；不做 prompt / judge 自动调参或分数校正；不做 Slack / Jira / CI 平台集成；估计算法只有经典 ANOVA gauge R&R，不含 bootstrap 与 Bayesian 估计。
+这一版明确不做的事：不调用任何模型、不实现 judge、不跑评测（你已有的重复运行就是全部输入）；没有 Web UI 或面板，只有 CLI 与 Markdown；不做 prompt / judge 自动调参或分数校正；不做 Slack / Jira / CI 平台集成；估计算法只有经典 ANOVA gauge R&R，不含 bootstrap 与 Bayesian 估计。
 
 ## 配置
 
-v0.1 没有配置文件，行为只由输入格式和命令行参数决定。
+没有配置文件，行为只由输入格式和命令行参数决定。
 
 **canonical CSV** —— 表头必须是 `model,item,judge,run,score`（多余列忽略，顺序无关）：
 
@@ -190,29 +190,29 @@ spark-open,item-001,judge-b,1,39.1
 
 **promptfoo**：导出里必须有重复维度（`promptfoo eval --repeat n`，n ≥ 2），并且至少有 2 个判分 provider（每个断言的 `provider:`，或 `defaultTest.options.provider`）。只有一次执行、或只有一个判分 provider 的导出会被拒绝，并提示要补哪个参数。
 
-**Inspect**：日志里必须有 epoch 重复（`inspect eval <task> --epochs n`，n ≥ 2），且样本被 2 个以上 scorer 打过（`sample.scores` 的每个键就是一个 judge）。也可以直接指向一个目录，把多个模型的日志合并起来再 `compare`。
+**Inspect**：日志里必须有 epoch 重复（`inspect eval <task> --epochs n`，n ≥ 2），且样本被 2 个以上 scorer 打过（`sample.scores` 的每个键就是一个 judge）。也可以直接指向一个目录，把多个模型的日志合并起来再 `compare`——目录里的 `.eval` 压缩日志和 `inspect log convert` 写出的 `.json` 日志会一起读进来。
 
 ## 付费
 
-v0.1 的 CLI、全部导入器和示例数据是 MIT 开源的，`deltagauge report --out report.md` 不设任何限制——包括商用。收费点在它后面那一步：
+CLI、全部导入器和示例数据是 MIT 开源的，`deltagauge report --out report.md` 不设任何限制——包括商用。收费点在它后面那一步：
 
-- **托管 eval CI gate（v0.2 产品方向，不是 v0.1 代码）**：把 run bundle 上传，误差预算与判定限作为 CI 上的必过检查，并跨版本保留历史——于是"这次 -1.0 的变化在噪声里"不再靠人解释，而是门禁自己给出的结论。
+- **托管 eval CI gate（尚未实现的产品方向，不在本版代码里）**：把 run bundle 上传，误差预算与判定限作为 CI 上的必过检查，并跨版本保留历史——于是"这次 -1.0 的变化在噪声里"不再靠人解释，而是门禁自己给出的结论。
 - **接入支持**：帮助团队把判定限写进采购签核与版本放行流程，包括把 `report.md` 的结论对应到你们自己的验收标准。
 
 价格目前是待验证的假设，不是报价：约 **$199–499 / 月 / 团队**；如果按席位更好卖，则约 **$49 / 座位**。最小成交路径是：你先用免费的 `report.md` 跑出结论，我们把你最近 3 个 release 的 run bundle 做成托管检查，30 天后由你决定要不要继续。
 
-v0.1 不包含任何托管服务、HTTP API、账号或计费代码；付费面是 v0.2 的产品决定。
+本版不包含任何托管服务、HTTP API、账号或计费代码；付费面是后续版本的产品决定。
 
 ## 路线图
 
-- **v0.2 — 托管 eval CI gate**：上传 run bundle，把误差预算和判定限变成仓库上必过的检查，并保留跨版本历史；同时提供把判定限接入采购签核的支持服务。这是唯一已确定的付费方向。
+- **下一版 — 托管 eval CI gate**：上传 run bundle，把误差预算和判定限变成仓库上必过的检查，并保留跨版本历史；同时提供把判定限接入采购签核的支持服务。这是唯一已确定的付费方向。
 - 之后是否扩展导入器、是否提供 bootstrap / Bayesian 估计，取决于真实用户在自己的 run 数据上跑出了什么结论——先看反馈，不预先堆功能。
 
 ## 局限
 
 - 自带示例数据是合成的，见上文；本项目不附带任何跨实验室语料或已发布的 benchmark 数据。
 - 判定限是**量具自身**的 95% 测量限（`z × Total GRR`），不是"题目均值的标准误"。它回答"这个分差能否与测量系统区分"，不回答"两个模型在总体上是否等价"。
-- 估计算法是经典交叉随机效应 ANOVA（AIAG MSA），需要完全交叉的平衡设计；有界分数（如 0/1 或 1–5）在极端取值下会偏离正态假设，v0.1 不对此做校正。
+- 估计算法是经典交叉随机效应 ANOVA（AIAG MSA），需要完全交叉的平衡设计；有界分数（如 0/1 或 1–5）在极端取值下会偏离正态假设，本版不对此做校正。
 - 方差分量估计为负时按 AIAG 惯例截断到 0。
 - 数据量小时，再现性估计的抽样波动较大（judge 只有 2–3 个时尤其明显），`gauge` 给出的分量要按这个精度读。
 

@@ -9,7 +9,7 @@
 ### Gauge R&R, transplanted into model evaluation: split the score variance into repeatability and reproducibility, and get told whether the delta is noise.
 
 [![CI](https://github.com/SuperMarioYL/deltagauge/actions/workflows/ci.yml/badge.svg)](https://github.com/SuperMarioYL/deltagauge/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)](./VERSION)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue?style=flat-square)](./VERSION)
 [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Method](https://img.shields.io/badge/method-AIAG%20gauge%20R%26R-8957E5?style=flat-square)](./docs/demo-results.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
@@ -160,7 +160,7 @@ spark-open-vs-qwen3.8-flash-next.csv
 
 `report.md` holds the same result in a quotable shape: the design table, the error budget
 table, one verdict row per model pair, and the estimator's assumptions (the ANOVA model, what
-the decision limit means, and that v0.1 does no bootstrap or Bayesian estimation).
+the decision limit means, and that this release does no bootstrap or Bayesian estimation).
 
 > The demo data is **synthetic**: it is generated to carry a one-point mean gap plus known
 > judge and run noise, purely to demonstrate the flow. It is not a published benchmark
@@ -198,7 +198,7 @@ The recording script is [`docs/demo.tape`](./docs/demo.tape) and re-renders with
 | Leaderboards / aggregation dashboards | Aggregation and ranking (point estimates) | We put an error budget next to a point estimate; we do not change the ranking |
 | **DeltaGauge** | Variance decomposition over repeat runs, giving a decision limit and a REAL / NOISE verdict | — |
 
-What v0.1 deliberately does not do: no model calls, no judge implementation, no eval harness
+What this release deliberately does not do: no model calls, no judge implementation, no eval harness
 (the repeat runs you already have are the entire input); no web UI or dashboard, just the CLI
 and Markdown; no prompt or judge auto-tuning and no score correction; no Slack, Jira or
 CI-provider integrations; and classical ANOVA gauge R&R only — no bootstrap, no Bayesian
@@ -206,7 +206,7 @@ estimator.
 
 ## Configuration
 
-v0.1 has no config file; behavior follows from the input format and the command line flags.
+There is no config file; behavior follows from the input format and the command line flags.
 
 **Canonical CSV** — the header must be `model,item,judge,run,score` (extra columns are ignored,
 order does not matter):
@@ -230,15 +230,17 @@ provider, is refused with the flag that would fix it.
 
 **Inspect**: the log needs epoch repeats (`inspect eval <task> --epochs n`, n >= 2) and every
 sample scored by more than one scorer (each key in `sample.scores` is a judge). You can also
-point it at a directory, which merges one log per model so that `compare` becomes answerable.
+point it at a directory, which merges one log per model so that `compare` becomes answerable;
+the zipped `.eval` logs and the `.json` logs an explicit `inspect log convert` writes are read
+together.
 
 ## Pricing
 
-The v0.1 CLI, every importer and the demo data are MIT-licensed, and
+The CLI, every importer and the demo data are MIT-licensed, and
 `deltagauge report --out report.md` is unrestricted — including commercial use. The paid
 surface is the step after it:
 
-- **Hosted eval CI gate** (a v0.2 product direction, not v0.1 code): upload a run bundle and
+- **Hosted eval CI gate** (a product direction not in this release): upload a run bundle and
   get the error budget and the decision limit as a required CI check, with history across
   releases. "This -1.0 move is inside the noise" then stops being a human argument and becomes
   a gate's own conclusion.
@@ -250,12 +252,12 @@ about **$49 per seat** if per-seat wins discovery. The smallest path to a first 
 you produce the conclusion with the free `report.md`, we run the hosted check over the run
 bundles of your last 3 releases, and after 30 days you decide whether to continue.
 
-v0.1 contains no hosted service, HTTP API, account or billing code; the paid surface is a v0.2
-product decision.
+This release contains no hosted service, HTTP API, account or billing code; the paid surface
+is a later-version product decision.
 
 ## Roadmap
 
-- **v0.2 — the hosted eval CI gate**: upload a run bundle and turn the error budget and the
+- **Next release — the hosted eval CI gate**: upload a run bundle and turn the error budget and the
   decision limit into a required check on the repository, with history across releases, plus
   paid support for wiring the decision limit into procurement sign-off. This is the only
   settled revenue direction.
@@ -271,7 +273,7 @@ product decision.
   measurement system", not "are these two models equivalent overall".
 - The estimator is a classical crossed random-effects ANOVA (AIAG MSA) and needs a fully
   crossed, balanced design. Bounded scores (0/1, or 1–5) depart from normality at the
-  extremes, and v0.1 does not correct for that.
+  extremes, and this release does not correct for that.
 - Variance components that estimate below zero are clamped to zero, the AIAG convention.
 - On small designs the reproducibility estimate is noisy, especially with only 2–3 judges;
   read the components `gauge` prints with that precision in mind.

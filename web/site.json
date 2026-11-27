@@ -11,7 +11,7 @@
   "meta": {
     "visual_profile": "neon-particle",
     "demo_source": "docs/demo-results.json",
-    "implementation_version": "0.1.0"
+    "implementation_version": "0.2.0"
   },
   "hero": {
     "eyebrow": {

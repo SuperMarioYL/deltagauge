@@ -17,11 +17,30 @@ def format_score(value: float) -> str:
     return f"{value:.1f}" if abs(value) >= 1 else f"{value:.3f}"
 
 
+UNDEFINED_SHARE = "—"
+"""What a percentage share reads as when the total it divides by is zero."""
+
+
+def format_share(share: float, total: float) -> str:
+    """A percentage share of ``total``; an em dash when ``total`` is zero.
+
+    A design whose measured variation is exactly zero (every cell scored the same)
+    has no total to take a share of, so "0.00%" or "100.00%" would both be false.
+    """
+    return f"{share:.2f}%" if total else UNDEFINED_SHARE
+
+
+def format_cell(value: str) -> str:
+    """A table cell of user data: the name's own ``|`` must not split the row."""
+    return value.replace("|", "\\|").replace("\n", " ").replace("\r", " ")
+
+
 def render_report(run_set: RunSet, *, data_source: str) -> str:
     """Render the error budget of ``run_set`` as Markdown."""
     budget = error_budget(run_set)
     comparisons = compare_all(run_set)
     sources = ", ".join(sorted({observation.source for observation in run_set.observations}))
+    total_variance = budget.total_variation**2
 
     lines = [
         "# DeltaGauge error budget",
@@ -54,18 +73,21 @@ def render_report(run_set: RunSet, *, data_source: str) -> str:
     ]
     lines.extend(
         f"| {component.label} | {component.sd:.3f} | {component.variance:.3f} "
-        f"| {component.share:.2f}% |"
+        f"| {format_share(component.share, total_variance)} |"
         for component in budget.components()
     )
     lines.extend(
         [
             f"| **Total GRR** | **{budget.total_grr:.3f}** "
-            f"| **{budget.total_grr**2:.3f}** | **{budget.pct_contribution:.2f}%** |",
+            f"| **{budget.total_grr**2:.3f}** "
+            f"| **{format_share(budget.pct_contribution, total_variance)}** |",
             f"| **Total variation** | **{budget.total_variation:.3f}** "
-            f"| **{budget.total_variation**2:.3f}** | **100.00%** |",
+            f"| **{total_variance:.3f}** "
+            f"| **{format_share(100.0, total_variance)}** |",
             "",
-            f"- %GRR by contribution: {budget.pct_contribution:.2f}%",
-            f"- %GRR by study variation: {budget.pct_study_variation:.2f}%",
+            f"- %GRR by contribution: {format_share(budget.pct_contribution, total_variance)}",
+            "- %GRR by study variation: "
+            f"{format_share(budget.pct_study_variation, budget.total_variation)}",
             f"- Decision limit: ±{format_score(budget.decision_limit)}",
             "",
             "## Verdicts",
@@ -99,7 +121,7 @@ def _verdict_row(comparison: Delta) -> str:
         else format_score(comparison.delta)
     )
     return (
-        f"| {comparison.model_a} | {comparison.model_b} "
+        f"| {format_cell(comparison.model_a)} | {format_cell(comparison.model_b)} "
         f"| {format_score(comparison.score_a)} | {format_score(comparison.score_b)} "
         f"| {delta} | ±{format_score(comparison.decision_limit)} "
         f"| **{comparison.verdict}** |"
