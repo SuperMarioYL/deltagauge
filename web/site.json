@@ -139,8 +139,8 @@
           "en": "Where it sits"
         },
         "body": {
-          "zh": "promptfoo 和 Inspect 负责跑评测、给单次运行打分，排行榜负责聚合与排名；DeltaGauge 只做它们之后那一步——在重复运行上做方差分解，给出判定限与 REAL / NOISE。我们读它们的导出，不替换它们。v0.1 不做 Slack / Jira / CI 平台集成，也没有 Web UI。",
-          "en": "promptfoo and Inspect run the eval and score a single run; leaderboards aggregate and rank. DeltaGauge does only the step after that - variance decomposition over repeat runs, yielding a decision limit and a REAL / NOISE verdict. We read their exports; we do not replace them. v0.1 ships no Slack, Jira or CI-provider integration and no web UI."
+          "zh": "promptfoo 和 Inspect 负责跑评测、给单次运行打分，排行榜负责聚合与排名；DeltaGauge 只做它们之后那一步——在重复运行上做方差分解，给出判定限与 REAL / NOISE。我们读它们的导出，不替换它们。本版不做 Slack / Jira / CI 平台集成，也没有 Web UI。",
+          "en": "promptfoo and Inspect run the eval and score a single run; leaderboards aggregate and rank. DeltaGauge does only the step after that - variance decomposition over repeat runs, yielding a decision limit and a REAL / NOISE verdict. We read their exports; we do not replace them. This release ships no Slack, Jira or CI-provider integration and no web UI."
         },
         "image": {
           "light": "/assets/presentation/integrations-light.svg",
@@ -163,8 +163,8 @@
           "en": "Canonical CSV and what the input must be"
         },
         "body": {
-          "zh": "v0.1 没有配置文件，行为只由输入格式和命令行参数决定。canonical CSV 的表头必须是 model,item,judge,run,score（多余列忽略，顺序无关）；设计必须完全交叉且平衡，否则会被拒绝并点名缺了什么。promptfoo 需要重复维度（--repeat n，n ≥ 2）和至少 2 个判分 provider；Inspect 需要 epoch 重复（--epochs n，n ≥ 2），且每个样本被 2 个以上 scorer 打过。",
-          "en": "v0.1 has no config file; behavior follows from the input format and the command line flags. The canonical CSV header must be model,item,judge,run,score (extra columns ignored, order irrelevant), and the design must be fully crossed and balanced or it is rejected with the missing cells named. promptfoo needs a repetition dimension (--repeat n, n >= 2) and at least 2 grading providers; Inspect needs epoch repeats (--epochs n, n >= 2) with every sample scored by more than one scorer."
+          "zh": "没有配置文件，行为只由输入格式和命令行参数决定。canonical CSV 的表头必须是 model,item,judge,run,score（多余列忽略，顺序无关）；设计必须完全交叉且平衡，否则会被拒绝并点名缺了什么。promptfoo 需要重复维度（--repeat n，n ≥ 2）和至少 2 个判分 provider；Inspect 需要 epoch 重复（--epochs n，n ≥ 2），且每个样本被 2 个以上 scorer 打过——指向一个目录时会把它里面的 .eval 日志和 `inspect log convert` 写出的 .json 日志一起合并。",
+          "en": "There is no config file; behavior follows from the input format and the command line flags. The canonical CSV header must be model,item,judge,run,score (extra columns ignored, order irrelevant), and the design must be fully crossed and balanced or it is rejected with the missing cells named. promptfoo needs a repetition dimension (--repeat n, n >= 2) and at least 2 grading providers; Inspect needs epoch repeats (--epochs n, n >= 2) with every sample scored by more than one scorer; pointing it at a directory merges the .eval logs it holds together with the .json logs `inspect log convert` writes."
         },
         "code": "model,item,judge,run,score\nspark-open,item-001,judge-a,1,38.4\nspark-open,item-001,judge-b,1,39.1"
       },
@@ -174,8 +174,8 @@
           "en": "What the estimator assumes"
         },
         "body": {
-          "zh": "估计算法是经典交叉随机效应 ANOVA（AIAG MSA），需要完全交叉的平衡设计。有界分数（0/1，或 1–5）在极端取值下会偏离正态假设，v0.1 不对此做校正；方差分量估计为负时按 AIAG 惯例截断到 0。judge 只有 2–3 个时再现性估计的抽样波动较大，gauge 给出的分量要按这个精度读。",
-          "en": "The estimator is a classical crossed random-effects ANOVA (AIAG MSA) and needs a fully crossed, balanced design. Bounded scores (0/1, or 1-5) depart from normality at the extremes and v0.1 does not correct for that; components that estimate below zero are clamped to zero, the AIAG convention. With only 2-3 judges the reproducibility estimate is noisy, so read the components gauge prints with that precision in mind."
+          "zh": "估计算法是经典交叉随机效应 ANOVA（AIAG MSA），需要完全交叉的平衡设计。有界分数（0/1，或 1–5）在极端取值下会偏离正态假设，本版不对此做校正；方差分量估计为负时按 AIAG 惯例截断到 0。judge 只有 2–3 个时再现性估计的抽样波动较大，gauge 给出的分量要按这个精度读。",
+          "en": "The estimator is a classical crossed random-effects ANOVA (AIAG MSA) and needs a fully crossed, balanced design. Bounded scores (0/1, or 1-5) depart from normality at the extremes and this release does not correct for that; components that estimate below zero are clamped to zero, the AIAG convention. With only 2-3 judges the reproducibility estimate is noisy, so read the components gauge prints with that precision in mind."
         },
         "code": "deltagauge gauge runs.csv\ndeltagauge compare model-a model-b runs.csv"
       }
@@ -187,8 +187,8 @@
       "en": "Recorded run"
     },
     "note": {
-      "zh": "v0.1 的真实终端输出，录自 tag v0.1.0 的仓库检出（Python 3.13.12，不联网、不调用模型）。示例数据集是合成的：它被生成成恰好带 1.0 分均值差和已知的 judge / run 噪声，只用来演示流程——它不是任何已发布的 benchmark 结果，39 和 40 只是标签，不是真实分数。",
-      "en": "Real v0.1 terminal output, recorded from a checkout at tag v0.1.0 (Python 3.13.12, no network, no model calls). The demo dataset is synthetic: it is generated to carry a one-point mean gap plus known judge and run noise, purely to demonstrate the flow. It is not a published benchmark result, and 39 and 40 are labels, not real scores."
+      "zh": "真实终端输出，录自 tag v0.1.0 的仓库检出，并在 v0.2.0 上逐条复验：下面五条命令的输出没有变化（Python 3.13.12，不联网、不调用模型）。示例数据集是合成的：它被生成成恰好带 1.0 分均值差和已知的 judge / run 噪声，只用来演示流程——它不是任何已发布的 benchmark 结果，39 和 40 只是标签，不是真实分数。",
+      "en": "Real terminal output, recorded from a checkout at tag v0.1.0 and re-verified command by command on v0.2.0, where the output of all five commands is unchanged (Python 3.13.12, no network, no model calls). The demo dataset is synthetic: it is generated to carry a one-point mean gap plus known judge and run noise, purely to demonstrate the flow. It is not a published benchmark result, and 39 and 40 are labels, not real scores."
     },
     "source": "https://github.com/SuperMarioYL/deltagauge/blob/main/docs/demo-results.json",
     "steps": [
@@ -321,12 +321,12 @@
       "en": "The decision limit is the instrument's own 95% measurement limit (z × Total GRR), not the standard error of a mean over items: it answers whether the delta can be told apart from the measurement system, not whether two models are equivalent."
     },
     {
-      "zh": "v0.1 不调用任何模型、不实现 judge、不跑评测；没有 Web UI 或面板，只有 CLI 与 Markdown，也没有 Slack / Jira / CI 平台集成。",
-      "en": "v0.1 makes no model calls, implements no judge and runs no eval; there is no web UI or dashboard, just the CLI and Markdown, and no Slack, Jira or CI-provider integration."
+      "zh": "本版不调用任何模型、不实现 judge、不跑评测；没有 Web UI 或面板，只有 CLI 与 Markdown，也没有 Slack / Jira / CI 平台集成。",
+      "en": "This release makes no model calls, implements no judge and runs no eval; there is no web UI or dashboard, just the CLI and Markdown, and no Slack, Jira or CI-provider integration."
     },
     {
-      "zh": "托管 eval CI gate 是 v0.2 的产品方向，不是 v0.1 的代码；价格（约 $199–499 / 月 / 团队，或约 $49 / 座位）是待验证的假设，不是报价。v0.1 不含任何托管服务、HTTP API、账号或计费代码。",
-      "en": "The hosted eval CI gate is a v0.2 product direction, not v0.1 code; the pricing (about $199-499 per team per month, or about $49 per seat) is an unvalidated hypothesis, not a quote. v0.1 contains no hosted service, HTTP API, account or billing code."
+      "zh": "托管 eval CI gate 是尚未实现的产品方向，不在本版代码里；价格（约 $199–499 / 月 / 团队，或约 $49 / 座位）是待验证的假设，不是报价。本版不含任何托管服务、HTTP API、账号或计费代码。",
+      "en": "The hosted eval CI gate is a product direction not in this release's code; the pricing (about $199-499 per team per month, or about $49 per seat) is an unvalidated hypothesis, not a quote. This release contains no hosted service, HTTP API, account or billing code."
     }
   ],
   "footer": {
